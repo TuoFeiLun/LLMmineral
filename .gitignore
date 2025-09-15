@@ -1,0 +1,11 @@
+*.log
+*.pyc
+note.md
+__pycache__/
+.env
+.venv/
+.DS_Store
+.idea/
+.vscode/
+.cursor/
+simple_geological_db/

@@ -1,0 +1,19 @@
+"""
+RAG (Retrieval-Augmented Generation) 系统
+
+基于 LlamaIndex + Ollama + Qwen2.5 的知识问答系统
+支持 PDF、Word、Markdown 等多种文档格式
+"""
+
+from .rag_system import RAGSystem, create_rag_system, quick_setup
+from .document_processor import DocumentProcessor
+
+__version__ = "1.0.0"
+__author__ = "RAG System Team"
+
+__all__ = [
+    "RAGSystem",
+    "DocumentProcessor", 
+    "create_rag_system",
+    "quick_setup"
+]
