@@ -187,10 +187,12 @@ class ImageProcessor:
                     except:
                         pass
                 
-                # EXIF信息
+                # EXIF信息 - 转换为字符串以兼容ChromaDB
                 exif_data = self._extract_exif_data(img)
                 if exif_data:
-                    image_info['exif'] = exif_data
+                    # 将EXIF字典转换为字符串格式
+                    exif_str = "; ".join([f"{k}: {v}" for k, v in exif_data.items()])
+                    image_info['exif'] = exif_str
                 
         except Exception as e:
             logger.warning(f"提取图像信息失败 {image_path}: {str(e)}")
@@ -295,12 +297,9 @@ class ImageProcessor:
             parts.append(f"类别: {category}")
         
         # EXIF信息
-        if 'exif' in file_info:
-            exif = file_info['exif']
-            if 'Make' in exif and 'Model' in exif:
-                parts.append(f"设备: {exif['Make']} {exif['Model']}")
-            if 'DateTime' in exif:
-                parts.append(f"拍摄时间: {exif['DateTime']}")
+        if 'exif' in file_info and file_info['exif']:
+            # EXIF现在是字符串格式，直接添加
+            parts.append(f"EXIF信息: {file_info['exif']}")
         
         # OCR提取的文本
         if ocr_text:

@@ -9,11 +9,12 @@ import sys
 from pathlib import Path
 
 # 设置路径
+
 sys.path.append(str(Path(__file__).parent / "rag"))
 
 def setup_models(llm_model="qwen2.5:7b", embed_model_name="nomic-embed-text"):
-    """设置LLM和嵌入模型"""
-    print("🚀 设置模型...")
+    """set up models"""
+    print("🚀 set up models...")
     llm = Ollama(model=llm_model, base_url="http://localhost:11434", request_timeout=300.0)
     embed_model = OllamaEmbedding(model_name=embed_model_name, base_url="http://localhost:11434")
     
@@ -24,46 +25,52 @@ def setup_models(llm_model="qwen2.5:7b", embed_model_name="nomic-embed-text"):
     Settings.chunk_size = 1024
     Settings.chunk_overlap = 50
     
-    print(f"✅ 模型设置完成: LLM={llm_model}, 嵌入={embed_model_name}")
+    print(f"✅ models set up: LLM={llm_model}, 嵌入={embed_model_name}")
     return llm, embed_model
 
 def load_documents(data_path):
-    """加载文档"""
+    """load documents"""
     from llama_index.core.readers import SimpleDirectoryReader
-    from llama_index.readers.file import PDFReader
+    from llama_index.readers.file import PDFReader, DocxReader
     from llama_index.core.readers.json import JSONReader
+    from filesanalysis.convertfile2document import XLSXReader, CSVReader
     
-    print(f"📁 处理目录: {data_path}")
+    print(f"📁 processing directory: {data_path}")
       # 专用处理器
     pdf_reader = PDFReader()
+    docx_reader = DocxReader()
     json_reader = JSONReader()
+    csv_reader = CSVReader()
+    xlsx_reader = XLSXReader()
     
     reader = SimpleDirectoryReader(
         input_dir=data_path,
         file_extractor={
             ".pdf": pdf_reader,
-            ".docx": "default", 
-            ".txt": "default",
-            ".json": json_reader
+            ".docx": docx_reader, 
+            ".txt": None,
+            ".json": json_reader,
+            ".csv": csv_reader,
+            ".xlsx": xlsx_reader
         },
         recursive=True
     )
     
     documents = reader.load_data()
-    print(f"✅ 加载了 {len(documents)} 个文档")
+    print(f"✅ loaded {len(documents)} documents")
     return documents
 
 def add_documents_to_collection(data_path, db_path, collection_name="documents", update_mode="append"):
     """
-    向现有集合添加或更新文档
+    add or update documents to existing collection
     
     Args:
-        data_path: 新文档路径
-        db_path: 数据库路径  
-        collection_name: 集合名称
-        update_mode: 更新模式 ("append"=追加, "replace"=替换, "merge"=智能合并)
+        data_path: new document path
+        db_path: database path  
+        collection_name: collection name
+        update_mode: update mode ("append"=append, "replace"=replace, "merge"=merge)
     """
-    print(f"📝 向集合 {collection_name} 添加文档 (模式: {update_mode})...")
+    print(f"📝 add documents to collection {collection_name} (mode: {update_mode})...")
     
     # 创建数据库目录
     os.makedirs(db_path, exist_ok=True)
@@ -72,26 +79,26 @@ def add_documents_to_collection(data_path, db_path, collection_name="documents",
     # 获取或创建集合
     try:
         chroma_collection = chroma_client.get_collection(collection_name)
-        print(f"✅ 找到现有集合 {collection_name}, 当前包含 {chroma_collection.count()} 个文档")
+        print(f"✅ found existing collection {collection_name}, currently contains {chroma_collection.count()} documents")
         collection_exists = True
     except:
         chroma_collection = chroma_client.create_collection(collection_name)
-        print(f"🆕 创建新集合 {collection_name}")
+        print(f"🆕 create new collection {collection_name}")
         collection_exists = False
     
     # 加载新文档
     new_documents = load_documents(data_path)
     if not new_documents:
-        print("❌ 没有找到新文档")
+        print("❌ no new documents found")
         return None
     
-    print(f"📄 准备添加 {len(new_documents)} 个新文档")
+    print(f"📄 prepare to add {len(new_documents)} new documents")
     
     # 根据更新模式处理
     if update_mode == "replace" or not collection_exists:
         # 替换模式：清空现有数据
         if collection_exists and chroma_collection.count() > 0:
-            print("🗑️  清空现有集合数据...")
+            print("🗑️  clear existing collection data...")
             chroma_client.delete_collection(collection_name)
             chroma_collection = chroma_client.create_collection(collection_name)
         
@@ -99,7 +106,7 @@ def add_documents_to_collection(data_path, db_path, collection_name="documents",
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
         
-        print("🧮 生成向量索引...")
+        print("🧮 generate vector index...")
         index = VectorStoreIndex.from_documents(
             new_documents,
             storage_context=storage_context,
@@ -199,11 +206,11 @@ def batch_add_documents(data_paths, db_path, collection_name="documents", update
     
     return index
 def load_existing_database(db_path):
-    """加载现有数据库"""
-    print("💾 加载现有数据库...")
+    """load existing database"""
+    print("💾 load existing database...")
     
     if not os.path.exists(db_path):
-        print("❌ 数据库不存在")
+        print("❌ database does not exist")
         return None
     
     try:
@@ -212,10 +219,10 @@ def load_existing_database(db_path):
         existing_count = chroma_collection.count()
         
         if existing_count == 0:
-            print("⚠️  数据库为空")
+            print("⚠️  database is empty")
             return None
         
-        print(f"✅ 加载现有数据库，包含 {existing_count} 个向量")
+        print(f"✅ load existing database, contains {existing_count} vectors")
         
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
@@ -224,11 +231,11 @@ def load_existing_database(db_path):
         return index
         
     except Exception as e:
-        print(f"❌ 加载数据库失败: {e}")
+        print(f"❌ load database failed: {e}")
         return None
 
 def list_collection_info(db_path, collection_name=None):
-    """列出集合信息"""
+    """list collection information"""
     chroma_client = chromadb.PersistentClient(path=db_path)
     
     if collection_name:
@@ -236,63 +243,64 @@ def list_collection_info(db_path, collection_name=None):
         try:
             collection = chroma_client.get_collection(collection_name)
             count = collection.count()
-            print(f"📊 集合 '{collection_name}' 包含 {count} 个文档")
+            print(f"📊 collection '{collection_name}' contains {count} documents")
             
             # 获取一些样本文档信息
             if count > 0:
                 sample = collection.peek(limit=3)
-                print("📝 样本文档:")
+                print("📝 sample documents:")
                 for i, doc in enumerate(sample.get('documents', [])[:3]):
                     print(f"  {i+1}. {doc[:100]}...")
                     
         except Exception as e:
-            print(f"❌ 集合 '{collection_name}' 不存在或访问失败: {e}")
+            print(f"❌ collection '{collection_name}' does not exist or access failed: {e}")
     else:
         # 显示所有集合
         collections = chroma_client.list_collections()
-        print(f"📋 数据库包含 {len(collections)} 个集合:")
+        print(f"📋 database contains {len(collections)} collections:")
         for col in collections:
             count = col.count()
-            print(f"  - {col.name}: {count} 个文档")
+            print(f"  - {col.name}: {count} documents")
 
 def test_queries(index, queries=None):
-    """测试查询"""
+    """test queries"""
     if queries is None:
-        queries = [
-             
-            
-            "give some information about the VL-4PQ Base",
-            "give some information about volcanics",            
+        queries = [    
+        "Lodestone Exploration is searching for VMS deposits below the cover rocks north and south of the Mount Chalmers deposit. Targets are gold and/or base metals. what are the main methods employed?",
+        "How far is EPM17157 (Pyrophyllite Hill Project) from Rockhampton in kilometers?",
+        "​​What minerals are contained in the Mount Chalmers deposit, which is a well-preserved, volcanic-hosted massive-sulphide mineralised system?",
+        "When did Mount Morgan Limited begin mining the Mount Chalmers deposit?​" 
+        
         ]
     
-    print("🧪 测试查询...")
+    print("🧪 test queries...")
     query_engine = index.as_query_engine()
     
     for query in queries:
-        print(f"\n🔍 查询: {query}")
+        print(f"\n🔍 Query Question: {query}")
         try:
             response = query_engine.query(query)
-            print(f"💡 回答: {response}")
+            print(f"💡 Answer: {response}")
         except Exception as e:
-            print(f"❌ 查询失败: {e}")
-            print("💡 可能的原因: LLM响应超时或Ollama服务问题")
+            print(f"❌ query failed: {e}")
+            print("💡 possible reasons: LLM response timeout or Ollama service problem")
 
 
 # 修改main函数以支持新的功能
 def main():
-    parser = argparse.ArgumentParser(description="地质数据RAG系统 - 支持增量更新")
+    parser = argparse.ArgumentParser(description="geological data RAG system - support incremental update")
     parser.add_argument("--mode", 
                         choices=["create", "load", "auto", "add", "batch-add", "info"], 
                         default="auto",
-                        help="运行模式")
+                        help="running mode")
     parser.add_argument("--update-mode", 
                         choices=["append", "replace", "merge"], 
                         default="append",
-                        help="更新模式: append=追加, replace=替换, merge=智能合并")
+                        help="update mode: append=append, replace=replace, merge=merge")
     parser.add_argument("--data-paths", nargs="*", 
-                        help="多个数据路径（用于batch-add模式）")
+                        help="multiple data paths (for batch-add mode)")
     parser.add_argument("--collection-name", default="documents", 
-                        help="集合名称")
+                        help="collection name")
     # ... 其他现有参数 ...
     
     args = parser.parse_args()
@@ -348,7 +356,52 @@ def main():
     print(f"\n✅ 完成！数据库位置: {args.db_path}")
 
 if __name__ == "__main__":
+    import time
+    import sys
+    sys.path.append("/Users/yjli/QUTIT/semester4/ifn712/LLMmineral")
+   
+    
+    
+
     setup_models()
-    db_path = "./simple_geological_db"
+
+    time_start = time.time()
+
+
+    # load documents
+    # data_path = "/Users/yjli/QUTIT/semester4/ifn712/datacollect/databytype/pdf/"
+    # documents = load_documents(data_path)
+    # print(f"Loaded {len(documents)} documents")
+    # for doc in documents:
+    #     if "PRELIMINARY" in doc.text.upper():
+    #         print(doc.text[:200])
+    # time_end = time.time()
+    # print(f"Time taken: {time_end - time_start} seconds")
+
+
+
+    # create database
+    # data_path = "/Users/yjli/QUTIT/semester4/ifn712/datacollect/databytype/xlsx"
+    # db_path = "./simple_geological_db"
+    # collection_name = "documents"
+    # update_mode = "append"
+    # index = add_documents_to_collection(data_path, db_path, collection_name, update_mode)
+    # test_queries(index)
+    # time_end = time.time()
+    # print(f"Time taken: {time_end - time_start} seconds")
+
+    # add documents to existing database
+    # data_path = "/Users/yjli/QUTIT/semester4/ifn712/datacollect/cr022748_2"
+    # db_path = "./simple_geological_db"
+    # collection_name = "documents"
+    # update_mode = "append"
+    # index = add_documents_to_collection(data_path, db_path, collection_name, update_mode)
+    # test_queries(index)
+
+
+
+
+    # test load existing database
+    db_path = "/Users/yjli/QUTIT/semester4/ifn712/LLMmineral/datastore/simple_geological_db"
     index = load_existing_database(db_path)
     test_queries(index)
