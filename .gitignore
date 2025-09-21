@@ -9,3 +9,4 @@ __pycache__/
 .vscode/
 .cursor/
 simple_geological_db/
+datastore/sourcedata/

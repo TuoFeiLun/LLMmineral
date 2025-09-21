@@ -1,8 +1,10 @@
 from llama_index.core import Document
 from llama_index.core.readers.base import BaseReader
-from typing import List
 import pandas as pd
 import os
+import re, hashlib
+from typing import List, Dict
+
 
 class CSVReader(BaseReader):
     """CSV file reader class - compatible with LlamaIndex interface"""
@@ -113,7 +115,54 @@ class XLSXReader(BaseReader):
             print(f"Failed to read XLSX file {file}: {e}")
             return []
 
+class PipeDelimitedTXTReader(BaseReader):
+    def load_data(self, file: str, extra_info: Dict = None) -> List[Document]:
+        docs: List[Document] = []
+        with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = [ln.strip() for ln in f if ln.strip()]
+        if not lines:
+            return docs
 
+        headers = [h.strip().strip('"') for h in lines[0].split('|')]
+        for i, line in enumerate(lines[1:], start=1):
+            cols = [c.strip().strip('"') for c in line.split('|')]
+            if len(cols) < len(headers):
+                cols += [''] * (len(headers) - len(cols))
+            elif len(cols) > len(headers):
+                cols = cols[:len(headers)]
+
+            row = dict(zip(headers, cols))
+
+            page_raw = row.get('Page Number') or row.get('PageNumber') or ''
+            m = re.search(r'\d+', page_raw)
+            page_num = int(m.group()) if m else None
+
+            # Make a compact text for embedding while keeping columns in metadata
+            text_lines = [f"{k}: {v}" for k, v in row.items() if v != ""]
+            text = "\n".join(text_lines) if text_lines else "Empty row"
+
+            meta = {
+                "file_name": os.path.basename(file),
+                "file_path": file,
+                "file_type": "txt",
+                "row_index": i,
+                "page_number": page_num,
+                **row,
+            }
+            if extra_info:
+                meta.update(extra_info)
+
+            key = "|".join([
+                row.get('Stratno', ''),
+                row.get('Stratigraphic Name', ''),
+                row.get('Reference Id', ''),
+                row.get('Usage No', ''),
+            ])
+            stable_id = hashlib.md5((os.path.basename(file) + "|" + key).encode("utf-8")).hexdigest()
+
+            doc = Document(text=text, metadata=meta, doc_id=stable_id)
+            docs.append(doc)
+        return docs
 
 
 
