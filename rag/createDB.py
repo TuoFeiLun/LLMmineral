@@ -349,6 +349,7 @@ def list_collection_info(db_path, collection_name=None):
 def test_queries(index, queries : List[str] =None):
     """test queries"""
     if queries is None:
+        # default queries
         queries = [    
         "Lodestone Exploration is searching for VMS deposits below the cover rocks north and south of the Mount Chalmers deposit. Targets are gold and/or base metals. what are the main methods employed?",
         "How far is EPM17157 (Pyrophyllite Hill Project) from Rockhampton in kilometers?",
@@ -373,6 +374,7 @@ def test_queries(index, queries : List[str] =None):
 def test_queries2(index, queries : List[str] =None):
     """test queries"""
     if queries is None:
+        # default queries
         queries = [    
         "Lodestone Exploration is searching for VMS deposits below the cover rocks north and south of the Mount Chalmers deposit. Targets are gold and/or base metals. what are the main methods employed?",
         "How far is EPM17157 (Pyrophyllite Hill Project) from Rockhampton in kilometers?",
@@ -551,19 +553,20 @@ if __name__ == "__main__":
 
 
     # test load QLD Stratigraphic documents
-    data_path = "/Users/yjli/QUTIT/semester4/ifn712/LLMmineral/datastore/sourcedata/QLDCurrent"
-    documents = load_QLDStratigraphic_documents(data_path)
-    print(f"Loaded {len(documents)} documents")
-    collection_name = "QLD_Stratigraphic"
-    update_mode = "append"
-    db_path = "./datastore/simple_geological_db"
-    index = add_documents_to_collection(data_path, db_path, collection_name, update_mode, new_documents=documents)
+    # data_path = "/Users/yjli/QUTIT/semester4/ifn712/LLMmineral/datastore/sourcedata/QLDCurrent"
+    # documents = load_QLDStratigraphic_documents(data_path)
+    # print(f"Loaded {len(documents)} documents")
+    # collection_name = "QLD_Stratigraphic"
+    # update_mode = "append"
+    # db_path = "./datastore/simple_geological_db"
+    # index = add_documents_to_collection(data_path, db_path, collection_name, update_mode, new_documents=documents)
 
-    time_end = time.time()
-    print(f"Time taken: {time_end - time_start} seconds")
+    # time_end = time.time()
+    # print(f"Time taken: {time_end - time_start} seconds")
 
     # test load existing database
-    # db_path = "/Users/yjli/QUTIT/semester4/ifn712/LLMmineral/datastore/simple_geological_db"
-    # index = load_existing_database(db_path)
+    db_path = "/Users/yjli/QUTIT/semester4/ifn712/LLMmineral/datastore/simple_geological_db"
+    index = load_existing_database(db_path)
     # queries = ["How many blocks does ATP 350P consists of on the eastern margin of the Surat Basin, Queensland?"]
-    # test_queries2(index)
+    queries = ["give some information about Aberdare Conglomerate."]
+    test_queries2(index, queries)
