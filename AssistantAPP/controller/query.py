@@ -19,7 +19,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from rag.createDB import load_existing_database, test_queries2, setup_models
 from datetime import timezone
 from config import SECRET_KEY, vector_db_path
-from model.query import Query
+from model.queryquestion import QueryQuestion
 import time
 query_router = APIRouter()
 security = HTTPBearer()
@@ -32,7 +32,7 @@ except Exception as e:
     raise HTTPException(status_code=500, detail="load database failed")
 
 @query_router.post("/send_query")
-async def send_query(query: Query):
+async def send_query(query: QueryQuestion):
     """user will send a query to the assistant,
     the assistant will return the answer to the user
     """
