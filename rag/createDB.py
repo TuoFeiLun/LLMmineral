@@ -12,6 +12,7 @@ from typing import List
 # set path
 
 sys.path.append(str(Path(__file__).parent / "rag"))
+print(sys.path)
 
 class MultiCollectionQueryEngine:
     """Query engine that merges results from multiple VectorStoreIndex instances."""
@@ -62,7 +63,7 @@ def load_documents(data_path):
     from llama_index.core.readers import SimpleDirectoryReader
     from llama_index.readers.file import PDFReader, DocxReader
     from llama_index.core.readers.json import JSONReader
-    from filesanalysis.convertfile2document import XLSXReader, CSVReader, PipeDelimitedTXTReader
+    from filesanalysis.convertfile2document import XLSXReader, CSVReader, PipeDelimitedTXTReader, ImageReader
     
     print(f"📁 processing directory: {data_path}")
       # unique reader
@@ -72,6 +73,7 @@ def load_documents(data_path):
     csv_reader = CSVReader()
     xlsx_reader = XLSXReader()
     txt_reader = PipeDelimitedTXTReader()
+    image_reader = ImageReader()
     reader = SimpleDirectoryReader(
         input_dir=data_path,
         file_extractor={
@@ -80,7 +82,12 @@ def load_documents(data_path):
             ".txt": txt_reader,
             ".json": json_reader,
             ".csv": csv_reader,
-            ".xlsx": xlsx_reader
+            ".xlsx": xlsx_reader,
+            ".tiff": image_reader,
+            ".tif": image_reader,
+            ".jpg": image_reader,
+            ".jpeg": image_reader,
+            ".png": image_reader
         },
         recursive=True
     )
@@ -255,7 +262,7 @@ def batch_add_documents(data_paths, db_path, collection_name="documents", update
             continue
     
     return index
-def load_existing_database(db_path, collection_names=None, similarity_top_k=5):
+def load_existing_database(db_path, collection_names : str =None, similarity_top_k=5):
     """Load one or multiple collections from an existing Chroma database.
     
     Args:
@@ -284,6 +291,58 @@ def load_existing_database(db_path, collection_names=None, similarity_top_k=5):
         elif isinstance(collection_names, str):
             collection_names = [collection_names]
 
+        indices = []
+        loaded_names = []
+        for name in collection_names:
+            try:
+                chroma_collection = chroma_client.get_collection(name)
+            except Exception as e:
+                print(f"❌ collection '{name}' not found: {e}")
+                continue
+
+            existing_count = chroma_collection.count()
+            if existing_count == 0:
+                print(f"⚠️  collection '{name}' is empty")
+                continue
+
+            vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+            index = VectorStoreIndex.from_vector_store(vector_store)
+            indices.append(index)
+            loaded_names.append(name)
+
+        if not indices:
+            print("⚠️  no non-empty collections loaded")
+            return None
+
+        if len(indices) == 1:
+            print(f"✅ loaded collection '{loaded_names[0]}'")
+            return indices[0]
+
+        print(f"✅ loaded {len(indices)} collections: {', '.join(loaded_names)}")
+        return MultiCollectionQueryEngine(indices, similarity_top_k=similarity_top_k)
+
+    except Exception as e:
+        print(f"❌ load database failed: {e}")
+        return None
+
+
+def load_existing_database_by_collection_name(db_path, collection_names : List[str], similarity_top_k=5):
+    """Load one or multiple collections from an existing Chroma database.
+    
+    Args:
+        db_path: path to Chroma persistent database
+        collection_names: str or list[str]. If None, defaults to ["documents"].
+        similarity_top_k: top-k per collection when fusing results
+    """
+    print("💾 Load existing database...")
+
+    if not os.path.exists(db_path):
+        print("❌ database does not exist")
+        return None
+
+    try:
+        chroma_client = chromadb.PersistentClient(path=db_path)
+        
         indices = []
         loaded_names = []
         for name in collection_names:
@@ -373,6 +432,11 @@ def test_queries(index, queries : List[str] =None):
 
 def test_queries2(index, queries : List[str] =None):
     """test queries"""
+
+    result = {
+        "answer": "",
+        "sources": []
+    }
     if queries is None:
         # default queries
         queries = [    
@@ -393,7 +457,7 @@ def test_queries2(index, queries : List[str] =None):
             response = query_engine.query(query)
             answer_text = getattr(response, "response", None) or str(response)
             print(f"💡 Answer: {answer_text}")
-
+            result["answer"] = answer_text
             # Print sources (up to 3)
             nodes = []
             try:
@@ -428,12 +492,14 @@ def test_queries2(index, queries : List[str] =None):
                     print(f"  {i}. {src}{page_str}{score_str}")
                     if snippet:
                         print(f"     ↳ {snippet}...")
+                        result["sources"].append(f"  {i}. {src}{page_str}{score_str} : {snippet}...")
             else:
                 print("📚 Sources: none available")
         except Exception as e:
             print(f"❌ query failed: {e}")
             print("💡 possible reasons: LLM response timeout or Ollama service problem")
-
+            
+    return result
 
 
 

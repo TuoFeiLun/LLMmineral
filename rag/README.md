@@ -1,193 +1,307 @@
-# 🌍 地质数据RAG系统使用指南
+# Geological Data RAG System
 
-## 🚀 功能特点
+A comprehensive Retrieval-Augmented Generation (RAG) system designed for geological data processing and querying. This system leverages LlamaIndex, ChromaDB, and Ollama to create a powerful document indexing and question-answering platform specifically tailored for geological datasets.
 
-- **模块化设计**：数据库创建、嵌入生成、查询功能完全分离
-- **手动控制**：你可以完全控制是否重新生成数据库
-- **命令行参数**：灵活的运行模式和配置选项
-- **文件变化检测**：当文件变化时，可以手动选择重新生成
+## Features
 
-## 📋 运行模式
+- **Multi-format Document Support**: Process PDF, DOCX, CSV, XLSX, JSON, and TXT files
+- **Specialized Geological Data Readers**: Custom readers for QLD Stratigraphic data and pipe-delimited formats
+- **Flexible Database Management**: Create, update, merge, and query ChromaDB collections
+- **Multi-collection Querying**: Query across multiple collections simultaneously
+- **Incremental Updates**: Append, replace, or intelligently merge new documents
+- **Ollama Integration**: Local LLM and embedding model support
+- **Progress Tracking**: Real-time feedback during document processing
 
-### 1. 强制重新创建模式 (`--mode create`)
+## Prerequisites
+
+- Python 3.8+
+- [Ollama](https://ollama.ai/) running locally on port 11434
+- Required Python packages (see `requirements.txt`)
+
+## Installation
+
+1. Install dependencies:
 ```bash
-# 删除现有数据库，重新生成所有嵌入向量
-python rag/simple_test.py --mode create
+pip install -r requirements.txt
 ```
-**适用场景**：
-- 文件夹中的文件发生了变化
-- 想要使用不同的嵌入模型
-- 数据库出现问题需要重建
 
-### 2. 只加载现有数据库模式 (`--mode load`)
+2. Ensure Ollama is running with required models:
 ```bash
-# 只加载现有数据库，不生成新的嵌入
-python rag/simple_test.py --mode load
-```
-**适用场景**：
-- 确定文件没有变化
-- 只想快速查询现有数据
-- 测试查询功能
+# Start Ollama service
+ollama serve
 
-### 3. 自动模式 (`--mode auto`) - 默认
+# Pull required models
+ollama pull qwen2.5:7b
+ollama pull nomic-embed-text
+```
+
+## Quick Start
+
+### 1. Basic Document Processing
+
+```python
+from createDB import setup_models, add_documents_to_collection
+
+# Initialize models
+setup_models()
+
+# Create a new collection with documents
+index = add_documents_to_collection(
+    data_path="/path/to/your/documents",
+    db_path="./geological_db",
+    collection_name="my_documents",
+    update_mode="replace"
+)
+```
+
+### 2. Load Existing Database
+
+```python
+from createDB import load_existing_database
+
+# Load existing database
+index = load_existing_database("./geological_db")
+
+# Query the database
+query_engine = index.as_query_engine()
+response = query_engine.query("What minerals are found in Queensland?")
+print(response)
+```
+
+### 3. QLD Stratigraphic Data Processing
+
+```python
+from createDB import load_QLDStratigraphic_documents, add_documents_to_collection
+
+# Load QLD stratigraphic documents
+documents = load_QLDStratigraphic_documents("/path/to/QLD/data")
+
+# Add to database
+index = add_documents_to_collection(
+    data_path=None,
+    db_path="./geological_db",
+    collection_name="QLD_Stratigraphic",
+    update_mode="append",
+    new_documents=documents
+)
+```
+
+## Core Functions
+
+### Document Loading
+
+#### `load_documents(data_path)`
+Loads documents from a directory with automatic file type detection:
+- **PDF**: Technical reports, research papers
+- **DOCX**: Word documents
+- **CSV/XLSX**: Spreadsheet data
+- **JSON**: Structured data
+- **TXT**: Pipe-delimited geological data
+
+#### `load_QLDStratigraphic_documents(data_path)`
+Specialized loader for Queensland stratigraphic datasets with enhanced metadata extraction.
+
+### Database Management
+
+#### `add_documents_to_collection(data_path, db_path, collection_name, update_mode, new_documents)`
+Adds documents to a ChromaDB collection with flexible update modes:
+
+- **`append`**: Add new documents to existing collection
+- **`replace`**: Clear existing data and add new documents
+- **`merge`**: Intelligently merge, avoiding duplicates
+
+#### `load_existing_database(db_path, collection_names, similarity_top_k)`
+Loads one or multiple collections from an existing database. Returns a `MultiCollectionQueryEngine` for cross-collection querying.
+
+#### `batch_add_documents(data_paths, db_path, collection_name, update_mode)`
+Processes multiple data directories in sequence, ideal for large-scale data ingestion.
+
+### Querying
+
+#### `MultiCollectionQueryEngine`
+Advanced query engine that searches across multiple collections and merges results by relevance score.
+
+```python
+# Query across all collections
+response = index.query("What are the main gold deposits in Queensland?")
+
+# Get detailed response with sources
+response = test_queries2(index, ["Your geological question here"])
+```
+
+### Utility Functions
+
+#### `list_collection_info(db_path, collection_name)`
+Display collection statistics and sample documents.
+
+#### `test_queries(index, queries)` / `test_queries2(index, queries)`
+Test the system with predefined or custom geological queries. `test_queries2` provides detailed source attribution.
+
+## Configuration
+
+### Model Settings
+Modify in `setup_models()`:
+```python
+def setup_models(llm_model="qwen2.5:7b", embed_model_name="nomic-embed-text"):
+    # Chunking parameters
+    Settings.chunk_size = 1024      # Adjust based on your data
+    Settings.chunk_overlap = 50     # Overlap between chunks
+```
+
+### Supported File Formats
+
+| Format | Reader | Use Case |
+|--------|---------|----------|
+| PDF | PDFReader | Research papers, reports |
+| DOCX | DocxReader | Word documents |
+| CSV | CSVReader | Tabular geological data |
+| XLSX | XLSXReader | Excel spreadsheets |
+| JSON | JSONReader | Structured datasets |
+| TXT | PipeDelimitedTXTReader | Pipe-delimited data |
+| TXT | QLDStratigraphicReader | QLD stratigraphic data |
+
+## Command Line Interface
+
+The system supports command-line operation:
+
 ```bash
-# 自动判断：有数据库就加载，没有就创建
-python rag/simple_test.py --mode auto
-# 或直接运行
-python rag/simple_test.py
-```
-**适用场景**：
-- 不确定数据库状态
-- 首次运行
-- 一般使用
+python createDB.py --mode create --data-path /path/to/data --db-path ./db --collection-name geology
 
-## 🛠️ 命令行参数
-
-```bash
-python rag/simple_test.py \
-  --mode create \
-  --data-path "/path/to/your/documents" \
-  --db-path "./my_database" \
-  --llm-model "qwen2.5:7b" \
-  --embed-model "nomic-embed-text"
+# Available modes:
+# - create: Create new database
+# - load: Load existing database
+# - add: Add documents to existing collection
+# - batch-add: Process multiple data paths
+# - info: Display collection information
 ```
 
-### 参数说明
+## Advanced Usage
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `--mode` | `auto` | 运行模式: `create`/`load`/`auto` |
-| `--data-path` | `cr088747-2014` | 文档数据路径 |
-| `--db-path` | `./simple_geological_db` | 数据库保存路径 |
-| `--llm-model` | `qwen2.5:7b` | 用于回答问题的LLM模型 |
-| `--embed-model` | `nomic-embed-text` | 用于生成嵌入的模型 |
+### Custom Document Readers
 
-## 🔄 典型使用流程
+Create specialized readers for your data formats:
 
-### 初次使用
-```bash
-# 1. 创建数据库和嵌入
-python rag/simple_test.py --mode create
+```python
+from llama_index.core.readers.base import BaseReader
+from llama_index.core import Document
+
+class CustomGeologyReader(BaseReader):
+    def load_data(self, file_path, extra_info=None):
+        # Your custom parsing logic
+        documents = []
+        # ... process your specific format
+        return documents
 ```
 
-### 日常查询
-```bash
-# 2. 快速加载现有数据库
-python rag/simple_test.py --mode load
+### Multi-Collection Setup
+
+```python
+# Create separate collections for different data types
+collections = {
+    "reports": "/path/to/reports",
+    "data_sheets": "/path/to/spreadsheets", 
+    "stratigraphic": "/path/to/QLD/data"
+}
+
+for name, path in collections.items():
+    add_documents_to_collection(path, "./geological_db", name, "replace")
+
+# Query across all collections
+index = load_existing_database("./geological_db")
 ```
 
-### 文件变化后
-```bash
-# 3. 重新生成数据库
-python rag/simple_test.py --mode create
+### Performance Optimization
+
+1. **Chunk Size**: Increase for longer documents, decrease for metadata-heavy data
+2. **Batch Processing**: Use `batch_add_documents` for large datasets
+3. **Merge Mode**: Use for incremental updates to avoid duplicates
+4. **Model Selection**: Choose appropriate Ollama models for your use case
+
+## Example Queries
+
+The system comes with predefined geological queries for testing:
+
+- "What are the main methods employed for VMS deposit exploration?"
+- "How far is EPM17157 from Rockhampton?"
+- "What minerals are contained in the Mount Chalmers deposit?"
+- "When did Mount Morgan Limited begin mining operations?"
+- "Where is ATP 350P located?"
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Ollama Connection**: Ensure Ollama is running on `localhost:11434`
+2. **Memory Issues**: Reduce `chunk_size` or process smaller batches
+3. **Metadata Length Warnings**: Increase `chunk_size` or reduce metadata fields
+4. **Slow Embedding**: Consider using faster embedding models or GPU acceleration
+
+### Performance Monitoring
+
+Monitor embedding progress:
+- **Parsing nodes**: Document chunking phase
+- **Generating embeddings**: Vector creation (typically 15-25 it/s)
+- **Collection count**: Final document count in database
+
+### Error Recovery
+
+The system includes error handling for:
+- Missing collections
+- Network timeouts
+- Corrupt documents
+- Duplicate detection
+
+## Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Data Sources  │───▶│  Document Loaders │───▶│   ChromaDB      │
+│                 │    │                  │    │   Collections   │
+│ • PDF Reports   │    │ • PDFReader      │    │                 │
+│ • Excel Data    │    │ • XLSXReader     │    │ • documents     │
+│ • QLD Strat     │    │ • QLDReader      │    │ • stratigraphic │
+│ • JSON/CSV      │    │ • CSVReader      │    │ • reports       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                                        │
+┌─────────────────┐    ┌──────────────────┐            │
+│   Query Engine  │◀───│  LlamaIndex      │◀───────────┘
+│                 │    │  VectorStore     │
+│ • Single Coll.  │    │                  │
+│ • Multi Coll.   │    │ • Embedding      │
+│ • Source Track  │    │ • Retrieval      │
+└─────────────────┘    └──────────────────┘
+         │                       ▲
+         ▼                       │
+┌─────────────────┐    ┌──────────────────┐
+│   Ollama LLM    │◀───│  Response        │
+│                 │    │  Synthesis       │
+│ • qwen2.5:7b    │    │                  │
+│ • nomic-embed   │    │                  │
+└─────────────────┘    └──────────────────┘
 ```
 
-## 📊 性能对比
+## Contributing
 
-| 模式 | 首次运行 | 后续运行 | 适用场景 |
-|------|----------|----------|----------|
-| `create` | 3-5分钟 | 3-5分钟 | 文件变化时 |
-| `load` | 30-60秒 | 30-60秒 | 文件无变化时 |
-| `auto` | 3-5分钟 | 30-60秒 | 一般使用 |
+When extending the system:
 
-## 🧩 核心函数说明
+1. Follow the existing reader pattern for new file formats
+2. Add appropriate metadata fields for geological context
+3. Include error handling and progress feedback
+4. Test with representative geological datasets
+5. Update documentation and examples
 
-### `setup_models()`
-- 设置LLM和嵌入模型
-- 配置文档分块参数
+## License
 
-### `load_documents()`
-- 从指定路径加载文档
-- 支持PDF、DOCX、TXT、JSON格式
+[Add your license information here]
 
-### `create_database_and_embeddings()`
-- 创建新的ChromaDB数据库
-- 生成文档的嵌入向量
-- 支持强制重建选项
+## Support
 
-### `load_existing_database()`
-- 加载现有的ChromaDB数据库
-- 验证数据库完整性
+For issues and questions:
+1. Check the troubleshooting section
+2. Verify Ollama model availability
+3. Review system logs for specific errors
+4. Test with smaller datasets first
 
-### `test_queries()`
-- 执行测试查询
-- 可自定义查询内容
+---
 
-## 🎯 使用建议
-
-### 何时使用 `--mode create`
-- ✅ 添加了新文件
-- ✅ 删除了文件
-- ✅ 修改了现有文件内容
-- ✅ 更换了嵌入模型
-- ✅ 数据库损坏
-
-### 何时使用 `--mode load`
-- ✅ 文件没有任何变化
-- ✅ 只想快速查询
-- ✅ 测试不同的查询问题
-- ✅ 验证系统功能
-
-### 何时使用 `--mode auto`
-- ✅ 不确定数据库状态
-- ✅ 首次运行系统
-- ✅ 懒得判断的时候 😄
-
-## 🚨 注意事项
-
-1. **文件变化检测**：系统不会自动检测文件变化，需要手动选择重建
-2. **模型一致性**：确保嵌入模型与数据库中的向量匹配
-3. **磁盘空间**：数据库文件可能较大，注意磁盘空间
-4. **网络连接**：首次使用时需要下载模型
-
-## 🔧 故障排除
-
-### 问题：每次都重新生成嵌入
-**解决**：使用 `--mode load` 强制加载现有数据库
-
-### 问题：查询结果不准确
-**解决**：使用 `--mode create` 重新生成数据库
-
-### 问题：数据库损坏
-**解决**：删除数据库文件夹，使用 `--mode create` 重建
-
-## 📈 示例输出
-
-### 创建模式
-```
-🌍 地质数据RAG系统
-==================================================
-📋 运行模式: create
-📁 数据路径: /Users/.../cr088747-2014
-💾 数据库路径: ./simple_geological_db
-==================================================
-🚀 设置模型...
-✅ 模型设置完成: LLM=qwen2.5:7b, 嵌入=nomic-embed-text
-🔨 强制重新创建数据库...
-💾 创建数据库和嵌入向量...
-🗑️  删除现有数据库...
-📁 处理目录: /Users/.../cr088747-2014
-✅ 加载了 6 个文档
-🧮 生成向量索引...
-📊 将处理 6 个文档
-⏱️  请耐心等待...
-Generating embeddings: 100%|████████| 9/9 [00:01<00:00, 5.47it/s]
-✅ 成功生成并保存 9 个向量到数据库
-```
-
-### 加载模式
-```
-🌍 地质数据RAG系统
-==================================================
-📋 运行模式: load
-📁 数据路径: /Users/.../cr088747-2014
-💾 数据库路径: ./simple_geological_db
-==================================================
-🚀 设置模型...
-✅ 模型设置完成: LLM=qwen2.5:7b, 嵌入=nomic-embed-text
-📖 只加载现有数据库...
-💾 加载现有数据库...
-✅ 加载现有数据库，包含 9 个向量
-```
-
-现在你有了完全的控制权！🎮
+This RAG system is specifically designed for geological data analysis and can be extended for other scientific domains with similar structured data requirements.
