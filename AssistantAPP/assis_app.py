@@ -15,8 +15,8 @@ app = FastAPI(
 app.secret_key = SECRET_KEY
 
 app.include_router(query_router, prefix='/v1/query')
-app.include_router(conversation_router, prefix='/v1')
-app.include_router(files_router, prefix='/v1')
+app.include_router(conversation_router, prefix='/v1/conversation')
+app.include_router(files_router, prefix='/v1/kb')
 app.include_router(rag_manage_router, prefix='/v1/rag')
 
 @app.get("/")
