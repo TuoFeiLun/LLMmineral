@@ -22,6 +22,7 @@ from setupllm import SetupLLM
 from model.queryquestion import QueryQuestion
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from database.creatSQL import get_llm_model_id_by_name
 from database.queryquestiondb import insert_queryquestion
 from database.conversationdb import get_conversation, create_conversation
@@ -44,12 +45,12 @@ async def send_query(query: QueryQuestion):
             raise HTTPException(status_code=500, detail="database not loaded")
         
         queries = [query.query]
-        send_ts = datetime.utcnow().isoformat()
+        send_ts = datetime.now(ZoneInfo("Australia/Brisbane")).isoformat()
         start_time = time.time()
         result = test_queries2(static_vectordb_index, queries)
         print(f"conversation_id: {query.conversation_id}")
         end_time = time.time()
-        finish_ts = datetime.utcnow().isoformat()
+        finish_ts = datetime.now(ZoneInfo("Australia/Brisbane")).isoformat()
         elapsed = end_time - start_time
         print(f"time taken: {elapsed} seconds")
 

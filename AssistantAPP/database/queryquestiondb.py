@@ -62,3 +62,33 @@ def get_queryquestion(record_id: int) -> Optional[Dict[str, Any]]:
             "send_time": row[7],
             "finish_time": row[8],
         }
+
+
+def get_queries_by_conversation(conversation_id: int) -> list[Dict[str, Any]]:
+    """Get all queries for a specific conversation, ordered by send_time."""
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, question, llmmodel_id, conversation_id, answer, sourcetrace, thinktime, send_time, finish_time
+            FROM queryquestion 
+            WHERE conversation_id = ?
+            ORDER BY send_time ASC;
+            """,
+            (conversation_id,),
+        )
+        rows = cur.fetchall()
+        return [
+            {
+                "id": row[0],
+                "question": row[1],
+                "llmmodel_id": row[2],
+                "conversation_id": row[3],
+                "answer": row[4],
+                "sourcetrace": row[5],
+                "thinktime": row[6],
+                "send_time": row[7],
+                "finish_time": row[8],
+            }
+            for row in rows
+        ]
