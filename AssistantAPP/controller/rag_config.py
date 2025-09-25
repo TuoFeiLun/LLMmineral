@@ -17,7 +17,7 @@ from database.vectordb import (
     get_active_collections,
     delete_vectordb_by_name
 )
-
+from setupllm import SetupLLM
 rag_manage_router = APIRouter()
 
 
@@ -82,54 +82,65 @@ async def set_collection_using(status_update: CollectionStatusUpdate):
     print(status_update.using_status)
     try:
         collection = _get_collection_or_404(status_update.collection_name)
-        print(collection)
-        # Update using status
-        new_status = 1 if status_update.using_status else 0
-        set_using_status(collection["id"], new_status)
-        
-        return {
-            "collection_name": status_update.collection_name,
-            "using_status": status_update.using_status,
-            "message": f"Collection '{status_update.collection_name}' status updated to {'active' if status_update.using_status else 'inactive'}"
-        }
+        # check if the collection is already using
+        if collection["using_status"] == status_update.using_status:
+            return {
+                "collection_name": status_update.collection_name,
+                "using_status": status_update.using_status,
+                "message": f"Collection '{status_update.collection_name}' is already {'active' if status_update.using_status else 'inactive'}"
+            }
+        else:
+            # Update using status
+            new_status = 1 if status_update.using_status else 0
+            set_using_status(collection["id"], new_status)
+
+            # reload 
+            # setupllm_update = SetupLLM()
+            # setupllm_update.update_vectordb_index()
+            return {
+                "collection_name": status_update.collection_name,
+                "using_status": status_update.using_status,
+                "message": f"Collection '{status_update.collection_name}' status updated to {'active' if status_update.using_status else 'inactive'}"
+            }
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update collection status: {e}")
 
 
-@rag_manage_router.post("/collection/{collection_name}/enable")
-async def enable_collection(collection_name: str):
-    """Enable a collection for use (set using_status=true)."""
-    try:
-        collection = _get_collection_or_404(collection_name)
-        set_using_status(collection["id"], 1)
-        return {
-            "collection_name": collection_name,
-            "using_status": True,
-            "message": f"Collection '{collection_name}' enabled"
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to enable collection: {e}")
+# @rag_manage_router.post("/collection/{collection_name}/enable")
+# async def enable_collection(collection_name: str):
+#     """Enable a collection for use (set using_status=true)."""
+#     try:
+#         collection = _get_collection_or_404(collection_name)
+#         set_using_status(collection["id"], 1)
+#         return {
+#             "collection_name": collection_name,
+#             "using_status": True,
+#             "message": f"Collection '{collection_name}' enabled"
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Failed to enable collection: {e}")
 
 
-@rag_manage_router.post("/collection/{collection_name}/disable")
-async def disable_collection(collection_name: str):
-    """Disable a collection (set using_status=false)."""
-    try:
-        collection = _get_collection_or_404(collection_name)
-        set_using_status(collection["id"], 0)
-        return {
-            "collection_name": collection_name,
-            "using_status": False,
-            "message": f"Collection '{collection_name}' disabled"
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to disable collection: {e}")
+# @rag_manage_router.post("/collection/{collection_name}/disable")
+# async def disable_collection(collection_name: str):
+#     """Disable a collection (set using_status=false)."""
+#     try:
+#         collection = _get_collection_or_404(collection_name)
+#         set_using_status(collection["id"], 0)
+#         return {
+#             "collection_name": collection_name,
+#             "using_status": False,
+#             "message": f"Collection '{collection_name}' disabled"
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Failed to disable collection: {e}")
 
 
 @rag_manage_router.delete("/collection/{collection_name}")

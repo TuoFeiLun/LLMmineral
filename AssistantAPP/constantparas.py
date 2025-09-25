@@ -1,0 +1,1 @@
+vector_db_path = "/Users/yjli/QUTIT/semester4/ifn712/LLMmineral/datastore/simple_geological_db"

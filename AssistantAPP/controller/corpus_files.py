@@ -11,7 +11,7 @@ from typing import List
 from fastapi import Request
 from pathlib import Path
 import shutil
-from config import vector_db_path
+from constantparas import vector_db_path
 from database.corpusdb import insert_corpus, mark_converted
 from database.vectordb import insert_vectordb, get_by_collection_name
 from rag.createDB import add_documents_to_collection, setup_models
