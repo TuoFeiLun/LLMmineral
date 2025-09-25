@@ -1,0 +1,109 @@
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.messagesArea {
+    flex: 1;
+    height: 0;
+    /* This allows the ScrollArea to take available space */
+}
+
+.inputArea {
+    flex-shrink: 0;
+    border-top: 1px solid var(--mantine-color-gray-3);
+}
+
+.messageWrapper {
+    width: 100%;
+}
+
+.userMessage {
+    justify-content: flex-end;
+}
+
+.assistantMessage {
+    justify-content: flex-start;
+}
+
+.userMessage .messageBubble {
+    background-color: var(--mantine-color-blue-6);
+    color: white;
+    max-width: 70%;
+    margin-left: auto;
+}
+
+.assistantMessage .messageBubble {
+    background-color: var(--mantine-color-gray-1);
+    max-width: 80%;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--mantine-color-gray-2);
+    flex-shrink: 0;
+}
+
+.userMessage .avatar {
+    background-color: var(--mantine-color-blue-6);
+    color: white;
+}
+
+.assistantMessage .avatar {
+    background-color: var(--mantine-color-green-6);
+    color: white;
+}
+
+.messageBubble {
+    border-radius: var(--mantine-radius-md);
+    word-wrap: break-word;
+}
+
+.timestamp {
+    text-align: right;
+}
+
+.userMessage .timestamp {
+    text-align: right;
+}
+
+.assistantMessage .timestamp {
+    text-align: left;
+}
+
+.welcomeMessage {
+    background: linear-gradient(135deg, var(--mantine-color-blue-0) 0%, var(--mantine-color-green-0) 100%);
+    border: 1px solid var(--mantine-color-blue-2);
+}
+
+@media (prefers-color-scheme: dark) {
+
+    .header,
+    .inputArea {
+        border-color: var(--mantine-color-dark-4);
+    }
+
+    .assistantMessage .messageBubble {
+        background-color: var(--mantine-color-dark-6);
+    }
+
+    .avatar {
+        background-color: var(--mantine-color-dark-5);
+    }
+
+    .welcomeMessage {
+        background: linear-gradient(135deg, var(--mantine-color-dark-7) 0%, var(--mantine-color-dark-6) 100%);
+        border-color: var(--mantine-color-dark-4);
+    }
+}

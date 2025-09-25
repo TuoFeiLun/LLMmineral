@@ -1,0 +1,57 @@
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.header {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.uploadCard {
+    border: 1px solid var(--mantine-color-gray-3);
+}
+
+.dropzone {
+    border: 2px dashed var(--mantine-color-gray-4);
+    background-color: var(--mantine-color-gray-0);
+    transition: all 0.2s ease;
+}
+
+.dropzone:hover {
+    border-color: var(--mantine-color-blue-4);
+    background-color: var(--mantine-color-blue-0);
+}
+
+.emptyState {
+    background: linear-gradient(135deg, var(--mantine-color-gray-0) 0%, var(--mantine-color-blue-0) 100%);
+    border: 2px dashed var(--mantine-color-gray-3);
+}
+
+@media (prefers-color-scheme: dark) {
+    .header {
+        border-color: var(--mantine-color-dark-4);
+    }
+
+    .uploadCard {
+        border-color: var(--mantine-color-dark-4);
+        background-color: var(--mantine-color-dark-6);
+    }
+
+    .dropzone {
+        border-color: var(--mantine-color-dark-4);
+        background-color: var(--mantine-color-dark-7);
+    }
+
+    .dropzone:hover {
+        border-color: var(--mantine-color-blue-7);
+        background-color: var(--mantine-color-dark-6);
+    }
+
+    .emptyState {
+        background: linear-gradient(135deg, var(--mantine-color-dark-7) 0%, var(--mantine-color-dark-6) 100%);
+        border-color: var(--mantine-color-dark-4);
+    }
+}

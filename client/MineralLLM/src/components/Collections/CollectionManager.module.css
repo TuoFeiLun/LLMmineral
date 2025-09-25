@@ -1,0 +1,45 @@
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.collectionCard {
+    border: 1px solid var(--mantine-color-gray-3);
+    transition: all 0.2s ease;
+}
+
+.collectionCard:hover {
+    box-shadow: var(--mantine-shadow-md);
+    border-color: var(--mantine-color-blue-3);
+}
+
+.emptyState {
+    background: linear-gradient(135deg, var(--mantine-color-gray-0) 0%, var(--mantine-color-blue-0) 100%);
+    border: 2px dashed var(--mantine-color-gray-3);
+}
+
+@media (prefers-color-scheme: dark) {
+    .header {
+        border-color: var(--mantine-color-dark-4);
+    }
+
+    .collectionCard {
+        border-color: var(--mantine-color-dark-4);
+        background-color: var(--mantine-color-dark-6);
+    }
+
+    .collectionCard:hover {
+        border-color: var(--mantine-color-blue-7);
+    }
+
+    .emptyState {
+        background: linear-gradient(135deg, var(--mantine-color-dark-7) 0%, var(--mantine-color-dark-6) 100%);
+        border-color: var(--mantine-color-dark-4);
+    }
+}
