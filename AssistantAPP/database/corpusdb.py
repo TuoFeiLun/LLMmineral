@@ -2,7 +2,7 @@
 Corpus table helpers.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from .creatSQL import get_connection
 
 
@@ -51,3 +51,38 @@ def get_corpus(corpus_id: int) -> Optional[Dict[str, Any]]:
             "vectordatabase_id": row[4],
             "uploaded_at": row[5],
         }
+
+
+def get_all_corpus(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    """Get all corpus files from the database with pagination."""
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, file_name, file_path, converted_status, vectordatabase_id, uploaded_at 
+            FROM corpus 
+            ORDER BY uploaded_at DESC 
+            LIMIT ? OFFSET ?;
+            """,
+            (limit, offset),
+        )
+        rows = cur.fetchall()
+        return [
+            {
+                "id": row[0],
+                "file_name": row[1],
+                "file_path": row[2],
+                "converted_status": row[3],
+                "vectordatabase_id": row[4],
+                "uploaded_at": row[5],
+            }
+            for row in rows
+        ]
+
+
+def delete_corpus(corpus_id: int) -> bool:
+    """Delete a corpus record from the database."""
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM corpus WHERE id = ?;", (corpus_id,))
+        return cur.rowcount > 0
