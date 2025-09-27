@@ -4,6 +4,9 @@ import pandas as pd
 import os
 import re, hashlib
 from typing import List, Dict
+from PIL import Image
+from PIL.ExifTags import TAGS
+import pytesseract
 
 
 class CSVReader(BaseReader):
@@ -166,9 +169,94 @@ class PipeDelimitedTXTReader(BaseReader):
 
 
 
+class ImageReader(BaseReader):
+    """Image file reader class for TIFF, JPG, PNG files - compatible with LlamaIndex interface"""
+    
+    def load_data(self, file: str, extra_info: dict = None) -> List[Document]:
+        """Load image file data with OCR and metadata extraction"""
+        try:
+            # Open image
+            with Image.open(file) as img:
+                # Extract basic image info
+                width, height = img.size
+                format_name = img.format
+                mode = img.mode
+                
+                # Extract EXIF data
+                exif_data = {}
+                if hasattr(img, '_getexif') and img._getexif() is not None:
+                    exif = img._getexif()
+                    for tag_id, value in exif.items():
+                        tag = TAGS.get(tag_id, tag_id)
+                        exif_data[tag] = str(value)[:100]  # Limit length
+                
+                # Perform OCR to extract text
+                ocr_text = ""
+                try:
+                    # Convert to RGB if necessary for OCR
+                    if img.mode != 'RGB':
+                        img_rgb = img.convert('RGB')
+                    else:
+                        img_rgb = img
+                    
+                    ocr_text = pytesseract.image_to_string(img_rgb, lang='eng')
+                    ocr_text = ocr_text.strip()
+                except Exception as ocr_e:
+                    print(f"OCR failed for {file}: {ocr_e}")
+                    ocr_text = ""
+                
+                # Build content text
+                content = f"Image file: {os.path.basename(file)}\n"
+                content += f"Format: {format_name}\n"
+                content += f"Dimensions: {width}x{height}\n"
+                content += f"Color mode: {mode}\n"
+                
+                # Add EXIF information
+                if exif_data:
+                    content += "\nEXIF Data:\n"
+                    for key, value in exif_data.items():
+                        content += f"{key}: {value}\n"
+                
+                # Add OCR text if available
+                if ocr_text:
+                    content += f"\nExtracted Text:\n{ocr_text}\n"
+                
+                # Check for geological keywords in filename and OCR text
+                geo_keywords = ['mineral', 'rock', 'formation', 'geology', 'outcrop', 'sample', 'core', 'drill', 'map', 'survey']
+                text_to_check = (os.path.basename(file).lower() + " " + ocr_text.lower())
+                found_keywords = [kw for kw in geo_keywords if kw in text_to_check]
+                
+                if found_keywords:
+                    content += f"\nGeological keywords found: {', '.join(found_keywords)}\n"
+                
+                # Create metadata
+                metadata = {
+                    "file_name": os.path.basename(file),
+                    "file_type": "image",
+                    "image_format": format_name.lower() if format_name else "unknown",
+                    "width": width,
+                    "height": height,
+                    "color_mode": mode,
+                    "has_ocr_text": bool(ocr_text),
+                    "ocr_text_length": len(ocr_text) if ocr_text else 0,
+                    "geological_keywords": ", ".join(found_keywords) if found_keywords else "",
+                    **exif_data
+                }
+                
+                if extra_info:
+                    metadata.update(extra_info)
+                
+                return [Document(text=content, metadata=metadata)]
+                
+        except Exception as e:
+            print(f"Failed to read image file {file}: {e}")
+            return []
+
+
 if __name__ == "__main__":
     # Create reader instances for external use
     csv_reader = CSVReader()
+    image_reader = ImageReader()
     xlsx_reader = XLSXReader()
 
     # Keep original function interface for compatibility with existing code
