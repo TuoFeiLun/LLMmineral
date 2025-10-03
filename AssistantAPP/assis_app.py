@@ -6,6 +6,7 @@ from controller.query import query_router
 from controller.conversation import conversation_router
 from controller.corpus_files import files_router
 from controller.rag_config import rag_manage_router
+from controller.answer_evaluation import answer_evaluation_router
 import uvicorn
 
 app = FastAPI(
@@ -35,6 +36,7 @@ app.include_router(query_router, prefix='/v1/query')
 app.include_router(conversation_router, prefix='/v1/conversation')
 app.include_router(files_router, prefix='/v1/kb')
 app.include_router(rag_manage_router, prefix='/v1/rag')
+app.include_router(answer_evaluation_router, prefix='/v1/evaluation')
 
 @app.get("/")
 async def root():

@@ -44,6 +44,25 @@ def initialize_database() -> None:
             );
             """
         )
+        
+        # Answer evaluation: evaluation metrics for query question answers
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS answer_evaluate (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                evaluate_queryquestion_id INTEGER NOT NULL,
+                if_answer INTEGER NOT NULL,
+                technical_accuracy REAL,
+                practical_utility REAL,
+                trustworthiness REAL,
+                comprehension_depth REAL,
+                issues_found TEXT,
+                suggestions_for_improvement TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (evaluate_queryquestion_id) REFERENCES queryquestion(id) ON DELETE RESTRICT
+            );
+            """
+        )
 
         # Each user question/answer pair within a conversation
         cur.execute(
@@ -127,5 +146,5 @@ def get_llm_model_id_by_name(name: str) -> Optional[int]:
         row = cur.fetchone()
         return row[0] if row else None
 
-
-initialize_database()
+if __name__ == "__main__":
+    initialize_database()
