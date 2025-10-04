@@ -18,6 +18,7 @@ answer_evaluation_router = APIRouter()
 async def create_answer_evaluation(answer_evaluation: AnswerEvaluation):
     """
     Create a new answer evaluation for a query question.
+    Each question can only have ONE evaluation.
     
     Args:
         answer_evaluation: AnswerEvaluation model with evaluation metrics
@@ -26,11 +27,23 @@ async def create_answer_evaluation(answer_evaluation: AnswerEvaluation):
         Dict with created evaluation ID
     """
     try:
+        # Check if evaluation already exists for this question
+        existing = answer_evaluationdb.get_answer_evaluation_by_question_id(
+            answer_evaluation.evaluate_queryquestion_id
+        )
+        if existing:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"An evaluation already exists for question ID {answer_evaluation.evaluate_queryquestion_id}. Use PATCH to update it."
+            )
+        
         evaluation_id = answer_evaluationdb.create_answer_evaluation(answer_evaluation)
         return {
             "message": "Answer evaluation created successfully",
             "evaluation_id": evaluation_id
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create evaluation: {str(e)}")
 

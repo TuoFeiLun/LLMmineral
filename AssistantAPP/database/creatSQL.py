@@ -50,7 +50,7 @@ def initialize_database() -> None:
             """
             CREATE TABLE IF NOT EXISTS answer_evaluate (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                evaluate_queryquestion_id INTEGER NOT NULL,
+                evaluate_queryquestion_id INTEGER NOT NULL UNIQUE,
                 if_answer INTEGER NOT NULL,
                 technical_accuracy REAL,
                 practical_utility REAL,
