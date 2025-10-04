@@ -43,7 +43,14 @@ async def get_conversation(conversation_id: int):
 
 @conversation_router.get("/conversations")
 async def get_all_conversation(limit: int = 50, offset: int = 0):
-    return db_list_conversations(limit=limit, offset=offset)
+    """Get all conversations with pagination."""
+    conversations = db_list_conversations(limit=limit, offset=offset)
+    return {
+        "conversations": conversations,
+        "count": len(conversations),
+        "limit": limit,
+        "offset": offset
+    }
 
 
 @conversation_router.get("/conversation/{conversation_id}/queries")
