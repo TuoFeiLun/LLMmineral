@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar/Navbar';
 import { ChatInterface } from './components/Chat/ChatInterface';
 import { CollectionManager } from './components/Collections/CollectionManager';
 import { FileUpload } from './components/FileUpload/FileUpload';
+import { AnswerEvaluation } from './components/AnswerEvaluation/AnswerEvaluation';
 
 function App() {
   const [activeView, setActiveView] = useState('chat');
@@ -16,6 +17,8 @@ function App() {
         return <CollectionManager />;
       case 'upload':
         return <FileUpload />;
+      case 'evaluation':
+        return <AnswerEvaluation />;
       default:
         return <ChatInterface />;
     }

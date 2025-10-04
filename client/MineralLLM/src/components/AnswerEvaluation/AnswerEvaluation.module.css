@@ -1,0 +1,42 @@
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+}
+
+.header {
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
+.scrollArea {
+    flex: 1;
+    height: calc(100vh - 180px);
+}
+
+.emptyState {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin: 2rem auto;
+    max-width: 500px;
+}
+
+.emptyState * {
+    color: white !important;
+}
+
+.questionCard {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e9ecef;
+}
+
+.questionCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.evaluationBadge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}

@@ -127,6 +127,39 @@ class ApiService {
     async deleteCollection(name) {
         return this.request(`/v1/rag/collection/${name}`, { method: 'DELETE' });
     }
+
+    // Answer Evaluation endpoints
+    async createAnswerEvaluation(evaluationData) {
+        return this.request('/v1/evaluation/answer_evaluation', {
+            method: 'POST',
+            body: JSON.stringify(evaluationData),
+        });
+    }
+
+    async getAnswerEvaluation(evaluationId) {
+        return this.request(`/v1/evaluation/answer_evaluation/${evaluationId}`);
+    }
+
+    async getAnswerEvaluationByQuestion(questionId) {
+        return this.request(`/v1/evaluation/answer_evaluation/question/${questionId}`);
+    }
+
+    async getAllAnswerEvaluations() {
+        return this.request('/v1/evaluation/answer_evaluations');
+    }
+
+    async updateAnswerEvaluation(evaluationId, evaluationData) {
+        return this.request(`/v1/evaluation/answer_evaluation/${evaluationId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(evaluationData),
+        });
+    }
+
+    async deleteAnswerEvaluation(evaluationId) {
+        return this.request(`/v1/evaluation/answer_evaluation/${evaluationId}`, {
+            method: 'DELETE',
+        });
+    }
 }
 
 export const apiService = new ApiService();

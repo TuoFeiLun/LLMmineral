@@ -4,6 +4,7 @@ import {
     IconDatabase,
     IconUpload,
     IconDiamond,
+    IconClipboard,
 } from '@tabler/icons-react';
 import { Center, Stack, Tooltip, UnstyledButton, Text } from '@mantine/core';
 import classes from './Navbar.module.css';
@@ -22,6 +23,7 @@ const navigationItems = [
     { key: 'chat', icon: IconMessageCircle, label: 'Chat' },
     { key: 'collections', icon: IconDatabase, label: 'Collections' },
     { key: 'upload', icon: IconUpload, label: 'Upload Files' },
+    { key: 'evaluation', icon: IconClipboard, label: 'Answer Evaluation' },
 ];
 
 export function Navbar({ activeView, setActiveView }) {

@@ -51,10 +51,12 @@ export function ChatInterface() {
             const response = await fetch(`${API_BASE_URL}/v1/conversation/conversations`);
             if (response.ok) {
                 const data = await response.json();
-                setConversations(data);
-                if (data.length > 0 && !currentConversationId) {
-                    setCurrentConversationId(data[0].id);
-                    loadConversationHistory(data[0].id);
+                // API now returns structured object with conversations array
+                const conversationsList = data.conversations || [];
+                setConversations(conversationsList);
+                if (conversationsList.length > 0 && !currentConversationId) {
+                    setCurrentConversationId(conversationsList[0].id);
+                    loadConversationHistory(conversationsList[0].id);
                 }
             }
         } catch (error) {
