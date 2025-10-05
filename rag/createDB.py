@@ -43,7 +43,10 @@ class MultiCollectionQueryEngine:
         return self.synthesizer.synthesize(query_str, top_nodes)
 
 def setup_models(llm_model="qwen2.5:7b", embed_model_name="nomic-embed-text"):
-    """set up models"""
+    """set up models   
+    llm_model="qwen2.5:7b" 
+    llm_model="llama3.1:8b"
+    """
     print("🚀 set up models...")
     llm = Ollama(model=llm_model, base_url="http://localhost:11434", request_timeout=300.0)
     embed_model = OllamaEmbedding(model_name=embed_model_name, base_url="http://localhost:11434")
