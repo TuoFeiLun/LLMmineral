@@ -118,8 +118,8 @@ def initialize_database() -> None:
             cur.executemany(
                 "INSERT INTO llmmodel(name) VALUES (?);",
                 [
-                    ("qwen2.5-7b",),
-                    ("llama3.1-7b",),
+                    ("qwen2.5:7b",),
+                    ("llama3.1:8b",),
                 ],
             )
 
