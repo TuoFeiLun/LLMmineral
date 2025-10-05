@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from rag.createDB import load_existing_database_by_collection_name, test_queries2, setup_models
 
-from setupllm import SetupLLM
+from setupllm import SetupLLM, SetupLLM_No_RAG
 from model.queryquestion import QueryQuestion
 import time
 from datetime import datetime
@@ -88,6 +88,70 @@ async def send_query(query: QueryQuestion):
         print(e)
         raise HTTPException(status_code=500, detail="query failed")
 
+    
+    return JSONResponse(status_code=200, content=result)
+
+
+
+@query_router.post("/send_query_no_rag")
+async def send_query_no_rag(query: QueryQuestion):
+    """
+    User sends a query to the assistant without RAG functionality
+    The assistant will return an answer using only the LLM without retrieval
+    """
+    setupllm_no_rag = SetupLLM_No_RAG(query.model_name)
+    print(f"Using model_name (No RAG): {query.model_name}")
+    
+    try:
+        
+        send_ts = datetime.now(ZoneInfo("Australia/Brisbane")).isoformat()
+        start_time = time.time()
+        
+        # Query LLM directly without RAG
+        system_prompt = "You are a helpful assistant for mineral exploration and geological data queries."
+        answer = setupllm_no_rag.query(query.query, system_prompt=system_prompt)
+        
+        end_time = time.time()
+        finish_ts = datetime.now(ZoneInfo("Australia/Brisbane")).isoformat()
+        elapsed = end_time - start_time
+        print(f"Time taken: {elapsed} seconds")
+
+        # Ensure conversation exists, create if not
+        conversation = get_conversation(query.conversation_id)
+        if not conversation:
+            if query.conversation_id <= 0:
+                query.conversation_id = create_conversation()
+            else:
+                raise HTTPException(status_code=400, detail=f"Conversation {query.conversation_id} does not exist")
+
+        # Resolve model id
+        llm_id = None
+        if query.llmmodel_id:
+            llm_id = query.llmmodel_id
+        else:
+            llm_id = get_llm_model_id_by_name(query.model_name or "qwen2.5-7b")
+
+        # Insert query record (no sources for non-RAG queries)
+        insert_queryquestion(
+            question=query.query,
+            llmmodel_id=llm_id or 1,
+            conversation_id=query.conversation_id,
+            answer=answer,
+            sourcetrace="No RAG - Direct LLM response",
+            thinktime=elapsed,
+            send_time=send_ts,
+            finish_time=finish_ts,
+        )
+        
+        result = {
+            "answer": answer,
+            "sources": [],  # No sources in non-RAG mode
+            "mode": "no_rag"
+        }
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Query failed (No RAG mode)")
     
     return JSONResponse(status_code=200, content=result)
 

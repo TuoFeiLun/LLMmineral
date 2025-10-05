@@ -40,3 +40,58 @@ class SetupLLM:
             SetupLLM.vectordb_index = load_existing_database_by_collection_name(vector_db_path, load_collection_names)
         except Exception as e:
             raise HTTPException(status_code=500, detail="update database collection failed")
+
+class SetupLLM_No_RAG:
+    """Setup LLM without RAG functionality (no embedding model, no vector database)"""
+    llm = None
+    
+    def __init__(self, llm_model="qwen2.5:7b"):
+        """
+        Initialize LLM without RAG components
+        Args:
+            llm_model: The LLM model name to use (e.g., "qwen2.5:7b", "llama3.1:8b")
+        """
+        self.setup_llm_only(llm_model)
+    
+    @classmethod
+    def setup_llm_only(cls, llm_model="qwen2.5:7b"):
+        """
+        Setup only the LLM model without embedding model or vector database
+        """
+        print(f"🚀 Setting up LLM only (No RAG)...")
+        cls.llm = Ollama(
+            model=llm_model, 
+            base_url="http://localhost:11434", 
+            request_timeout=300.0
+        )
+        print(f"✅ LLM set up: {llm_model} (No RAG mode)")
+        return cls.llm
+    
+    @classmethod
+    def query(cls, prompt: str, system_prompt: str = None) -> str:
+        """
+        Query the LLM directly without RAG
+        Args:
+            prompt: The user's question/prompt
+            system_prompt: Optional system prompt to guide the LLM's behavior
+        Returns:
+            The LLM's response as a string
+        """
+        if cls.llm is None:
+            raise ValueError("LLM not initialized. Call setup_llm_only() first.")
+        
+        try:
+            # Construct the full prompt
+            if system_prompt:
+                full_prompt = f"System: {system_prompt}\n\nUser: {prompt}\n\nAssistant:"
+            else:
+                full_prompt = prompt
+            
+            # Query the LLM directly
+            response = cls.llm.complete(full_prompt)
+            return str(response)
+        except Exception as e:
+            print(f"❌ LLM query failed: {e}")
+            raise
+         
+         
