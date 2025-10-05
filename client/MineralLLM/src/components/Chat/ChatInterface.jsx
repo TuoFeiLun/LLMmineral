@@ -27,7 +27,7 @@ export function ChatInterface() {
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [modelName, setModelName] = useState('qwen2.5-7b');
+    const [modelName, setModelName] = useState('qwen2.5:7b');
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [conversationToDelete, setConversationToDelete] = useState(null);
     const scrollAreaRef = useRef();
@@ -284,8 +284,8 @@ export function ChatInterface() {
                             value={modelName}
                             onChange={setModelName}
                             data={[
-                                { value: 'qwen2.5-7b', label: 'Qwen 2.5 7B' },
-                                { value: 'llama2-7b', label: 'Llama 2 7B' },
+                                { value: 'qwen2.5:7b', label: 'Qwen 2.5 7B' },
+                                { value: 'llama3.1:8b', label: 'Llama 3.1 8B' },
                             ]}
                             w={150}
                         />
