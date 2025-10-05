@@ -23,8 +23,8 @@ from constantparas import vector_db_path
 class SetupLLM:
     vectordb_index = None
      
-    def __init__(self):
-        setup_models()
+    def __init__(self,llm_model="qwen2.5:7b"):
+        setup_models(llm_model)
          
        
        

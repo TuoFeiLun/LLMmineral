@@ -37,7 +37,8 @@ async def send_query(query: QueryQuestion):
     """user will send a query to the assistant,
     the assistant will return the answer to the user
     """
-    setupllm = SetupLLM()
+    setupllm = SetupLLM(query.model_name)
+    print(f"using model_name: {query.model_name}")
     setupllm.update_vectordb_index()
     static_vectordb_index = setupllm.vectordb_index
     try:
