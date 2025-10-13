@@ -443,11 +443,11 @@ def test_queries2(index, queries : List[str] =None):
     if queries is None:
         # default queries
         queries = [    
-        "Lodestone Exploration is searching for VMS deposits below the cover rocks north and south of the Mount Chalmers deposit. Targets are gold and/or base metals. what are the main methods employed?",
-        "How far is EPM17157 (Pyrophyllite Hill Project) from Rockhampton in kilometers?",
-        "​​What minerals are contained in the Mount Chalmers deposit, which is a well-preserved, volcanic-hosted massive-sulphide mineralised system?",
-        "When did Mount Morgan Limited begin mining the Mount Chalmers deposit?​",
-        "where is the ATP 350P?"
+        # "Lodestone Exploration is searching for VMS deposits below the cover rocks north and south of the Mount Chalmers deposit. Targets are gold and/or base metals. what are the main methods employed?",
+        # "How far is EPM17157 (Pyrophyllite Hill Project) from Rockhampton in kilometers?",
+        # "​​What minerals are contained in the Mount Chalmers deposit, which is a well-preserved, volcanic-hosted massive-sulphide mineralised system?",
+        # "When did Mount Morgan Limited begin mining the Mount Chalmers deposit?​",
+        "This is test query. Because your input is empty."
         
         ]
     
