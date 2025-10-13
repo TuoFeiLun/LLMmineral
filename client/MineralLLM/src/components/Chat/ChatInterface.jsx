@@ -17,6 +17,7 @@ import {
 } from '@mantine/core';
 import { IconSend, IconPlus, IconUser, IconRobot, IconInfoCircle, IconDiamond, IconTrash } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { apiService } from '../../services/api';
 import classes from './ChatInterface.module.css';
 
 const API_BASE_URL = 'http://localhost:3000';
@@ -180,36 +181,37 @@ export function ChatInterface() {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/v1/query/send_query`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    conversation_id: currentConversationId || 0,
-                    query: userMessage.content,
-                    model_name: modelName,
-                }),
-            });
+            // Check if No RAG mode is selected
+            const isNoRAG = modelName.endsWith('-norag');
+            // Extract actual model name (remove -norag suffix if present)
+            const actualModelName = isNoRAG ? modelName.replace('-norag', '') : modelName;
 
-            if (response.ok) {
-                const data = await response.json();
-                const assistantMessage = {
-                    type: 'assistant',
-                    content: data.answer,
-                    sources: data.sources || [],
-                    timestamp: new Date(),
-                };
-                setMessages(prev => [...prev, assistantMessage]);
+            // Call appropriate API endpoint
+            const data = isNoRAG
+                ? await apiService.sendQueryNoRAG(
+                    currentConversationId || 0,
+                    userMessage.content,
+                    actualModelName
+                )
+                : await apiService.sendQuery(
+                    currentConversationId || 0,
+                    userMessage.content,
+                    actualModelName
+                );
 
-                // If conversation was auto-created, reload conversations
-                if (!currentConversationId) {
-                    await loadConversations();
-                    // The response should contain the conversation_id if it was auto-created
-                    // You may need to set currentConversationId from the response
-                }
-            } else {
-                throw new Error('Failed to send query');
+            const assistantMessage = {
+                type: 'assistant',
+                content: data.answer,
+                sources: data.sources || [],
+                timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+
+            // If conversation was auto-created, reload conversations
+            if (!currentConversationId) {
+                await loadConversations();
+                // The response should contain the conversation_id if it was auto-created
+                // You may need to set currentConversationId from the response
             }
         } catch (error) {
             notifications.show({
@@ -284,8 +286,10 @@ export function ChatInterface() {
                             value={modelName}
                             onChange={setModelName}
                             data={[
-                                { value: 'qwen2.5:7b', label: 'Qwen 2.5 7B' },
-                                { value: 'llama3.1:8b', label: 'Llama 3.1 8B' },
+                                { value: 'qwen2.5:7b', label: 'Qwen 2.5 7B (RAG)' },
+                                { value: 'llama3.1:8b', label: 'Llama 3.1 8B (RAG)' },
+                                { value: 'qwen2.5:7b-norag', label: 'Qwen 2.5 7B (No RAG)' },
+                                { value: 'llama3.1:8b-norag', label: 'Llama 3.1 8B (No RAG)' },
                             ]}
                             w={150}
                         />

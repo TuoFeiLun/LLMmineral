@@ -52,8 +52,23 @@ class ApiService {
     }
 
     // Query endpoints
-    async sendQuery(conversationId, query, modelName = 'qwen2.5-7b', llmModelId = null) {
+    async sendQuery(conversationId, query, modelName = 'qwen2.5:7b', llmModelId = null) {
         return this.request('/v1/query/send_query', {
+            method: 'POST',
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                query,
+                model_name: modelName,
+                llmmodel_id: llmModelId,
+            }),
+        });
+    }
+
+    async sendQueryNoRAG(conversationId, query, modelName = 'qwen2.5:7b', llmModelId = null) {
+        if (modelName.endsWith('-norag')) {
+            modelName = modelName.replace('-norag', '');
+        }
+        return this.request('/v1/query/send_query_no_rag', {
             method: 'POST',
             body: JSON.stringify({
                 conversation_id: conversationId,
