@@ -108,7 +108,8 @@ async def send_query_no_rag(query: QueryQuestion):
         start_time = time.time()
         
         # Query LLM directly without RAG
-        system_prompt = "You are a helpful assistant for mineral exploration and geological data queries."
+        # system_prompt = "You are a helpful assistant for mineral exploration and geological data queries."
+        system_prompt = "You are a helpful assistant"
         answer = setupllm_no_rag.query(query.query, system_prompt=system_prompt)
         
         end_time = time.time()
@@ -129,7 +130,7 @@ async def send_query_no_rag(query: QueryQuestion):
         if query.llmmodel_id:
             llm_id = query.llmmodel_id
         else:
-            llm_id = get_llm_model_id_by_name(query.model_name or "qwen2.5-7b")
+            llm_id = get_llm_model_id_by_name(query.model_name or "qwen2.5:7b")
 
         # Insert query record (no sources for non-RAG queries)
         insert_queryquestion(
